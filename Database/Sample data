@@ -1,0 +1,232 @@
+Full Dữ liệu mẫu
+-- 1. TaiKhoan (10 record, giữ tương tự, thêm email thực tế)
+INSERT INTO TaiKhoan (HoTen, Email, MatKhau, SoDienThoai, VaiTro)
+VALUES ('Nguyen Van A', 'vana@example.com', HASHBYTES('SHA2_256', 'pass1'), '0123456789', 'User'),
+       ('Tran Thi B', 'ttb@example.com', HASHBYTES('SHA2_256', 'pass2'), '0987654321', 'User'),
+       ('Le Van C', 'lvc@example.com', HASHBYTES('SHA2_256', 'pass3'), '0112233445', 'Admin'),
+       ('Pham Thi D', 'ptd@example.com', HASHBYTES('SHA2_256', 'pass4'), '0556677889', 'User'),
+       ('Hoang Van E', 'hve@example.com', HASHBYTES('SHA2_256', 'pass5'), '0334455667', 'User'),
+       ('Nguyen Thi F', 'ntf@example.com', HASHBYTES('SHA2_256', 'pass6'), '0778899001', 'User'),
+       ('Tran Van G', 'tvg@example.com', HASHBYTES('SHA2_256', 'pass7'), '0223344556', 'Admin'),
+       ('Le Thi H', 'lth@example.com', HASHBYTES('SHA2_256', 'pass8'), '0445566778', 'User'),
+       ('Pham Van I', 'pvi@example.com', HASHBYTES('SHA2_256', 'pass9'), '0667788990', 'User'),
+       ('Hoang Thi J', 'htj@example.com', HASHBYTES('SHA2_256', 'pass10'), '0889900112', 'User');
+-- 2. GioHang (10 record, thêm cho nhiều user)
+INSERT INTO GioHang (TaiKhoanID)
+VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9), (10);
+-- 3. ChiTietGioHang (20 record, thêm nhiều)
+INSERT INTO ChiTietGioHang (GioHangID, SanPhamID, SoLuong, DonGia)
+VALUES (1, 1, 2, 150000), (1, 2, 1, 250000), (2, 3, 3, 100000), (2, 4, 2, 200000),
+       (3, 5, 1, 300000), (3, 6, 4, 50000), (4, 7, 2, 400000), (4, 8, 1, 180000),
+       (5, 9, 3, 120000), (5, 10, 2, 220000), (6, 1, 1, 150000), (6, 3, 2, 100000),
+       (7, 4, 3, 200000), (7, 5, 1, 300000), (8, 6, 4, 50000), (8, 7, 2, 400000),
+       (9, 8, 1, 180000), (9, 9, 3, 120000), (10, 10, 2, 220000), (10, 2, 1, 250000);
+-- 4. DonHang (10 record, thêm nhiều)
+INSERT INTO DonHang (TaiKhoanID, TongTien, TrangThaiDon, DiaChiGiaoHang, PhuongThucThanhToanID, PhuongThucGiaoHangID)
+VALUES (1, 300000, 'Chờ xác nhận', '123 ABC, TP.HCM', 1, 1),
+       (2, 500000, 'Đang giao', '456 XYZ, Hà Nội', 2, 2),
+       (3, 400000, 'Hoàn tất', '789 DEF, Đà Nẵng', 1, 1),
+       (4, 600000, 'Hủy', '101 GHI, Bình Dương', 2, 2),
+       (5, 200000, 'Chờ xác nhận', '202 JKL, Cần Thơ', 1, 1),
+       (6, 350000, 'Đang giao', '303 MNO, Vũng Tàu', 2, 2),
+       (7, 450000, 'Hoàn tất', '404 PQR, Nha Trang', 1, 1),
+       (8, 550000, 'Hủy', '505 STU, Huế', 2, 2),
+       (9, 650000, 'Chờ xác nhận', '606 VWX, Quy Nhơn', 1, 1),
+       (10, 750000, 'Đang giao', '707 YZA, Buôn Ma Thuột', 2, 2);
+-- 5. ChiTietDonHang (20 record, thêm nhiều)
+INSERT INTO ChiTietDonHang (DonHangID, SanPhamID, SoLuong, DonGia, GiamGia)
+VALUES (1, 1, 2, 150000, 10000), (1, 2, 1, 250000, 0),
+       (2, 3, 3, 100000, 5000), (2, 4, 2, 200000, 20000),
+       (3, 5, 1, 300000, 0), (3, 6, 4, 50000, 1000),
+       (4, 7, 2, 400000, 30000), (4, 8, 1, 180000, 0),
+       (5, 9, 3, 120000, 15000), (5, 10, 2, 220000, 20000),
+       (6, 1, 1, 150000, 0), (6, 3, 2, 100000, 5000),
+       (7, 4, 3, 200000, 20000), (7, 5, 1, 300000, 0),
+       (8, 6, 4, 50000, 1000), (8, 7, 2, 400000, 30000),
+       (9, 8, 1, 180000, 0), (9, 9, 3, 120000, 15000),
+       (10, 10, 2, 220000, 20000), (10, 2, 1, 250000, 0);
+-- 6. SanPhamYeuThich (20 record, thêm nhiều)
+INSERT INTO SanPhamYeuThich (TaiKhoanID, SanPhamID)
+VALUES (1, 1), (1, 2), (2, 3), (2, 4), (3, 5), (3, 6), (4, 7), (4, 8), (5, 9), (5, 10),
+       (6, 1), (6, 3), (7, 4), (7, 5), (8, 6), (8, 7), (9, 8), (9, 9), (10, 10), (10, 2);
+-- 7. LichSuHanhVi (20 record, thêm nhiều)
+INSERT INTO LichSuHanhVi (TaiKhoanID, LoaiHanhVi, DoiTuongID)
+VALUES (1, 'Xem sản phẩm', 1), (1, 'Thêm giỏ hàng', 2),
+       (2, 'Mua hàng', 3), (2, 'Yêu thích', 4),
+       (3, 'Danh gia', 5), (3, 'Chat AI', 6),
+       (4, 'Goi y', 7), (4, 'Nhan thong bao', 8),
+       (5, 'Tim kiem', 9), (5, 'Dang ky', 10),
+       (6, 'Xem bai viet', 1), (6, 'Quan tam phong thuy', 2),
+       (7, 'Them yeu thich', 3), (7, 'Dat hang', 4),
+       (8, 'Tra loi chatbot', 5), (8, 'Nhan uu dai', 6),
+       (9, 'Xem san pham moi', 7), (9, 'Tim kiem decor', 8),
+       (10, 'Dang nhap', 9), (10, 'Cap nhat tai khoan', 10);
+-- 8. DanhMucSanPham (10 record, thêm nhiều dựa trên decor)
+INSERT INTO DanhMucSanPham (TenDanhMuc, MoTa, DanhMucChaID)
+VALUES ('Bình hoa', 'Bình hoa decor', NULL), ('Cây giả', 'Cây trang trí giả', NULL),
+       ('Đèn decor', 'Đèn nội thất', NULL), ('Tranh decor', 'Tranh tường', NULL),
+       ('Kệ decor', 'Kệ trang trí', NULL), ('Đồ gốm decor', 'Đồ gốm trang trí', NULL),
+       ('Hoa giả', 'Hoa trang trí giả', NULL), ('Cây cảnh giả', 'Cây cảnh nội thất giả', NULL),
+       ('Đèn bàn', 'Đèn bàn decor', 3), ('Tranh Boho', 'Tranh phong cách Boho', 4);
+-- 9. SanPham (20 record, thêm nhiều, thêm PhongCach dựa trên website decor Boho/Vintage)
+INSERT INTO SanPham (TenSanPham, MoTa, GiaBan, SoLuongTon, DanhMucID, TrangThai, PhongCach)
+VALUES ('Bình hoa vintage', 'Bình hoa cổ điển', 150000, 50, 1, 1, 'Vintage'),
+       ('Cây tùng giả', 'Cây phong thủy', 250000, 30, 2, 1, 'Modern'),
+       ('Đèn LED decor', 'Đèn hiện đại', 100000, 40, 3, 1, 'Modern'),
+       ('Tranh decor tường', 'Tranh nghệ thuật', 200000, 20, 4, 1, 'Boho'),
+       ('Kệ decor gỗ', 'Kệ đa năng', 300000, 25, 5, 1, 'Vintage'),
+       ('Bình hoa hiện đại', 'Bình hoa đơn giản', 120000, 60, 1, 1, 'Modern'),
+       ('Cây mai giả Tết', 'Cây trang trí Tết', 350000, 15, 2, 1, 'Traditional'),
+       ('Đèn bàn decor', 'Đèn đọc sách', 180000, 35, 3, 1, 'Modern'),
+       ('Tranh Boho', 'Tranh phong cách Boho', 220000, 28, 4, 1, 'Boho'),
+       ('Kệ treo tường', 'Kệ trang trí treo', 90000, 45, 5, 1, 'Vintage'),
+       ('Đồ gốm decor', 'Đồ gốm trang trí', 80000, 50, 6, 1, 'Boho'),
+       ('Hoa giả trang trí', 'Hoa decor đẹp', 50000, 100, 7, 1, 'Modern'),
+       ('Cây cảnh giả nội thất', 'Cây cảnh giả', 280000, 20, 8, 1, 'Vintage'),
+       ('Đèn bàn LED', 'Đèn bàn hiện đại', 140000, 40, 9, 1, 'Modern'),
+       ('Tranh Boho tường', 'Tranh Boho decor', 240000, 25, 10, 1, 'Boho'),
+       ('Bình hoa Boho', 'Bình hoa phong cách Boho', 160000, 35, 1, 1, 'Boho'),
+       ('Cây giả Vintage', 'Cây giả cổ điển', 260000, 25, 2, 1, 'Vintage'),
+       ('Đèn decor Vintage', 'Đèn cổ điển', 110000, 30, 3, 1, 'Vintage'),
+       ('Tranh decor Modern', 'Tranh hiện đại', 210000, 15, 4, 1, 'Modern'),
+       ('Kệ decor Boho', 'Kệ Boho trang trí', 310000, 20, 5, 1, 'Boho');
+-- 10. HinhAnhSanPham (20 record, thêm nhiều)
+INSERT INTO HinhAnhSanPham (SanPhamID, URL, LaAnhChinh)
+VALUES (1, 'url_binhhoa1.jpg', 1), (2, 'url_caytung.jpg', 1),
+       (3, 'url_denled.jpg', 1), (4, 'url_tranh1.jpg', 1),
+       (5, 'url_ke1.jpg', 1), (6, 'url_binhhoa2.jpg', 1),
+       (7, 'url_caymai.jpg', 1), (8, 'url_denban.jpg', 1),
+       (9, 'url_tranhboho.jpg', 1), (10, 'url_ketreo.jpg', 1),
+       (11, 'url_dogom.jpg', 1), (12, 'url_hoagia.jpg', 1),
+       (13, 'url_caycanh.jpg', 1), (14, 'url_denbanled.jpg', 1),
+       (15, 'url_tranhbohotuong.jpg', 1), (16, 'url_binhhoaboho.jpg', 1),
+       (17, 'url_caygiavintage.jpg', 1), (18, 'url_dendecorvintage.jpg', 1),
+       (19, 'url_tranhdecormodern.jpg', 1), (20, 'url_kedecorboho.jpg', 1);
+-- 11. DanhGiaSanPham (20 record, thêm nhiều)
+INSERT INTO DanhGiaSanPham (SanPhamID, TaiKhoanID, SoSao, NoiDung, AnhReview)
+VALUES (1, 1, 5, 'Đẹp lắm', 'url_review1.jpg'), (2, 2, 4, 'Tốt', NULL),
+       (3, 3, 5, 'Sáng đẹp', 'url_review3.jpg'), (4, 4, 3, 'Bình thường', NULL),
+       (5, 5, 5, 'Chất lượng cao', 'url_review5.jpg'), (6, 6, 4, 'Giá rẻ', NULL),
+       (7, 7, 5, 'Phong thủy tốt', 'url_review7.jpg'), (8, 8, 4, 'Dễ lắp', NULL),
+       (9, 9, 5, 'Nghệ thuật', 'url_review9.jpg'), (10, 10, 4, 'Tiện lợi', NULL),
+       (11, 1, 5, 'Đồ gốm đẹp', 'url_review11.jpg'), (12, 2, 4, 'Hoa giả như thật', NULL),
+       (13, 3, 5, 'Cây cảnh đẹp', 'url_review13.jpg'), (14, 4, 3, 'Đèn bàn ok', NULL),
+       (15, 5, 5, 'Tranh Boho tuyệt', 'url_review15.jpg'), (16, 6, 4, 'Bình hoa Boho hay', NULL),
+       (17, 7, 5, 'Cây Vintage đẹp', 'url_review17.jpg'), (18, 8, 4, 'Đèn Vintage tốt', NULL),
+       (19, 9, 5, 'Tranh Modern hay', 'url_review19.jpg'), (20, 10, 4, 'Kệ Boho tiện', NULL);
+-- 12. PhieuGiamGia (5 record, cập nhật từ website: 20k, 50k, 100k)
+INSERT INTO PhieuGiamGia (MaPhieu, GiaTriGiam, DonToiThieu, NgayBatDau, NgayKetThuc, SoLuong)
+VALUES ('20K_DON_DAU', 20000, 600000, '2024-01-01', '2024-12-31', 100),
+       ('Giam50K', 50000, 1500000, '2024-01-01', '2024-12-31', 50),
+       ('Giam100K', 100000, 2200000, '2024-01-01', '2024-12-31', 30),
+       ('FLASH_SALE', 30000, 1000000, '2024-10-01', '2024-10-31', 20),
+       ('NEW_MEMBER', 10000, 500000, '2024-01-01', '2024-12-31', 200);
+-- 13. ChiTietPhieuGiamGia (10 record, thêm nhiều)
+INSERT INTO ChiTietPhieuGiamGia (PhieuID, TaiKhoanID, DonHangID)
+VALUES (1, 1, 1), (2, 2, 2), (3, 3, 3), (4, 4, 4), (5, 5, 5),
+       (1, 6, 6), (2, 7, 7), (3, 8, 8), (4, 9, 9), (5, 10, 10);
+-- 14. ThongBao (20 record, thêm TaiKhoanID cho cá nhân hóa, dựa trên website ưu đãi)
+INSERT INTO ThongBao (TaiKhoanID, TieuDe, NoiDung, LoaiThongBao)
+VALUES (1, 'Khuyến mãi mới', 'Giảm 20k cho đơn đầu tiên từ 600k', 'Khuyến mãi'),
+       (2, 'Sản phẩm mới', 'Cây tùng giả vừa về', 'Sản phẩm mới'),
+       (3, 'Flash Sale', 'Giảm 50k cho đơn 1500k', 'Flash Sale'),
+       (4, 'Đơn hàng cập nhật', 'Đơn của bạn đã giao', 'Đơn hàng'),
+       (5, 'Tin tức mới', 'Bài viết phong thủy cây tùng', 'Tin tức'),
+       (6, 'Ưu đãi thành viên', 'Miễn phí giao hàng >2M', 'Thành viên'),
+       (7, 'Bảo hành sản phẩm', 'Trả hàng trong 3 ngày', 'Bảo hành'),
+       (8, 'Cập nhật hệ thống', 'Website cập nhật ưu đãi', 'Hệ thống'),
+       (9, 'Gợi ý decor', 'Ý tưởng trang trí với cây giả', 'Gợi ý'),
+       (10, 'Chatbot hỗ trợ', 'Hỏi đáp về decor', 'Hỗ trợ'),
+       (1, 'Ưu đãi cá nhân', 'Giảm 100k cho đơn >2.2M', 'Khuyến mãi'),
+       (2, 'Sản phẩm gợi ý', 'Bình hoa vintage cho bạn', 'Sản phẩm mới'),
+       (3, 'Tin tức decor', 'Hướng dẫn trang trí nhỏ hẹp', 'Tin tức'),
+       (4, 'Đơn hàng mới', 'Đơn hàng của bạn chờ xác nhận', 'Đơn hàng'),
+       (5, 'Phong thủy mới', 'Ý nghĩa cây tùng giả', 'Tin tức'),
+       (6, 'Ưu đãi đặc biệt', 'Giảm 50k cho thành viên', 'Thành viên'),
+       (7, 'Sai lầm decor', 'Tránh sai lầm chọn cây giả', 'Tin tức'),
+       (8, 'Trang trí Tết', 'Chọn cây giả Tết phù hợp', 'Tin tức'),
+       (9, 'Hỗ trợ giao hàng', 'Miễn phí ship đơn >2M', 'Hỗ trợ'),
+       (10, 'Cập nhật chính sách', 'Chính sách trả hàng mới', 'Hệ thống');
+-- 15. BaiViet (10 record, cập nhật từ website blog: 5 bài, thêm 5 placeholder)
+INSERT INTO BaiViet (TieuDe, NoiDung, AnhDaiDien, TacGia)
+VALUES ('Cây tùng giả có ý nghĩa gì trong phong thủy?', 'ý nghĩa phong thủy cây tùng trong trang tríTrong phong thủy, cây tùng giả là loại cây trang trí được ưa chuộng nhờ vào vẻ đẹp thanh cao và ý nghĩa tốt lành. Cây tùng đều là biểu tượng của sự trường thọ, đào thọ, và mang lại sự bình an, may mắn. Nhiều gia...', 'url_tung.jpg', 'Admin'),
+       ('Ý Tưởng Decor Sáng Tạo Với Cây Giả: Không Gian Thêm Xanh Mát', 'Cây giả trang trí phòng khách đẹp như thậtCây giả không chỉ là giải pháp thay thế cho cây thật trong những không gian nhỏ hẹp, mà còn là công cụ trang trí sáng tạo giúp tăng tính thẩm mỹ và đem lại cảm giác tươi mới cho không gian sống. Hãy cùng khám phá...', 'url_decor.jpg', 'Editor'),
+       ('Hướng dẫn trang trí cây giả cho không gian nhỏ hẹp', 'trang trí cây giả cho không gian nhỏCây giả trang trí đã trở thành lựa chọn phổ biến trong việc làm đẹp không gian sống và làm việc. Với những không gian nhỏ hẹp, việc trang trí cây giả không chỉ giúp tăng tính thẩm mỹ mà còn tối ưu hóa diện tích. Tuy nhiên,...', 'url_nhohep.jpg', 'Admin'),
+       ('Những Sai Lầm Khi Chọn Cây Giả Trang Trí Mà Bạn Cần Tránh', 'Không gian sống hiện đại được trang trí bằng cây giả trang trí đẹp.Trang trí không gian sống hay làm việc bằng cây giả trang trí đang là xu hướng phổ biến hiện nay. Cây giả trang trí đẹp không chỉ mang lại vẻ thẩm mỹ mà còn giúp tiết kiệm thời gian chăm sóc....', 'url_sailam.jpg', 'Editor'),
+       ('Cách Chọn Cây Giả Trang Trí Tết Phù Hợp Với Không Gian Nhà Bạn', 'Toàn cảnh một không gian phòng khách rực rỡ với các loại cây giả trang trí Tết như cây mai Tết Nguyên Đán đang đến gần, việc lựa chọn cây giả trang trí Tết không chỉ giúp không gian sống thêm ấm cúng, rực rỡ mà còn mang ý nghĩa phong thủy, tài lộc và may...', 'url_tet.jpg', 'Admin'),
+       ('Xu hướng decor 2025', 'Các ý tưởng mới cho nội thất...', 'url_xuhuong.jpg', 'Editor'),
+       ('Phong thủy cây giả', 'Mang may mắn vào nhà...', 'url_phongthuy2.jpg', 'Admin'),
+       ('Decor phòng nhỏ', 'Tối ưu không gian...', 'url_phongnho.jpg', 'Editor'),
+       ('Sai lầm phổ biến decor', 'Tránh lỗi khi chọn decor...', 'url_sailam2.jpg', 'Admin'),
+       ('Trang trí Tết với decor', 'Cây giả Tết đẹp...', 'url_tet2.jpg', 'Editor');
+-- 16. GoiYSanPham (20 record, thêm nhiều)
+INSERT INTO GoiYSanPham (TaiKhoanID, SanPhamID, LyDoGoiY)
+VALUES (1, 1, 'Dựa trên xem cây giả'), (1, 2, 'Sản phẩm tương tự'),
+       (2, 3, 'Dựa trên yêu thích'), (2, 4, 'Khuyến mãi'),
+       (3, 5, 'Phong thủy tốt'), (3, 6, 'Giá rẻ'),
+       (4, 7, 'Mới về'), (4, 8, 'Bán chạy'),
+       (5, 9, 'Decor Tết'), (5, 10, 'Ý tưởng mới'),
+       (6, 11, 'Dựa trên blog decor'), (6, 12, 'Phong cách Boho'),
+       (7, 13, 'Tương tự cây tùng'), (7, 14, 'Khuyến mãi 50k'),
+       (8, 15, 'Ý tưởng trang trí nhỏ'), (8, 16, 'Sai lầm tránh'),
+       (9, 17, 'Trang trí Tết'), (9, 18, 'Phong thủy'),
+       (10, 19, 'Decor phòng khách'), (10, 20, 'Xu hướng 2025');
+-- 17. ChatBot (20 record, thêm nhiều, dựa trên câu hỏi decor)
+INSERT INTO ChatBot (TaiKhoanID, CauHoi, CauTraLoi)
+VALUES (1, 'Cây tùng giả ý nghĩa?', 'Biểu tượng trường thọ, bình an'),
+       (2, 'Decor sáng tạo cây giả?', 'Tăng thẩm mỹ, tươi mới không gian'),
+       (3, 'Trang trí cây giả nhỏ hẹp?', 'Tối ưu diện tích, tăng thẩm mỹ'),
+       (4, 'Sai lầm chọn cây giả?', 'Tránh tiết kiệm thời gian chăm sóc sai'),
+       (5, 'Chọn cây giả Tết?', 'Mang phong thủy, tài lộc'),
+       (6, 'Giảm 20k đơn đầu?', 'Đơn từ 600k, hết hạn 31/12/2023'),
+       (7, 'Giảm 50k?', 'Đơn từ 1500k, hết hạn 31/12/2023'),
+       (8, 'Giảm 100k?', 'Đơn từ 2200k, hết hạn 31/12/2023'),
+       (9, 'Miễn phí giao hàng?', 'Đơn >2000k hoặc thành viên'),
+       (10, 'Trả hàng?', 'Miễn phí trong 3 ngày nếu không thích'),
+       (1, 'Phong thủy cây tùng?', 'Mang may mắn, trường thọ'),
+       (2, 'Ý tưởng decor xanh mát?', 'Sử dụng cây giả cho phòng khách'),
+       (3, 'Hướng dẫn trang trí?', 'Đặt cây giả ở góc phòng nhỏ'),
+       (4, 'Sai lầm trang trí?', 'Chọn cây giả không phù hợp không gian'),
+       (5, 'Cây giả Tết phù hợp?', 'Cây mai giả cho phòng khách rực rỡ'),
+       (6, 'Chất lượng sản phẩm?', 'Đảm bảo, đa dạng, giá phù hợp'),
+       (7, 'Hỗ trợ hotline?', '096.180.1950, 9:00-17:00 thứ 2-7'),
+       (8, 'Đăng ký thành viên?', 'Nhận ưu đãi khuyến mãi'),
+       (9, 'Giao hàng nhanh?', 'Miễn phí cho đơn lớn'),
+       (10, 'Bảo hành decor?', 'Trả lại nếu không thích trong 3 ngày');
+-- 18. LichSuThanhToan (10 record, thêm nhiều)
+INSERT INTO LichSuThanhToan (DonHangID, PhuongThucThanhToanID, SoTien, TrangThaiThanhToan)
+VALUES (1, 1, 300000, 'Thành công'), (2, 2, 500000, 'Chờ xử lý'),
+       (3, 1, 400000, 'Thành công'), (4, 2, 600000, 'Thất bại'),
+       (5, 1, 200000, 'Thành công'), (6, 2, 350000, 'Chờ xử lý'),
+       (7, 1, 450000, 'Thành công'), (8, 2, 550000, 'Thất bại'),
+       (9, 1, 650000, 'Thành công'), (10, 2, 750000, 'Chờ xử lý');
+-- 19. PhuongThucThanhToan (5 record, giữ)
+INSERT INTO PhuongThucThanhToan (TenPhuongThuc, MoTa)
+VALUES ('COD', 'Thanh toán khi nhận hàng'), ('VNPay', 'Online qua VNPay'),
+       ('Momo', 'Ví điện tử Momo'), ('Chuyển khoản', 'Ngân hàng'),
+       ('Thẻ tín dụng', 'Visa/Mastercard');
+-- 20. PhuongThucGiaoHang (5 record, giữ)
+INSERT INTO PhuongThucGiaoHang (TenPhuongThuc, PhiGiaoHang, MoTa)
+VALUES ('Giao nhanh', 30000, '2 ngày'), ('Tiết kiệm', 15000, '5 ngày'),
+       ('Hỏa tốc', 50000, '1 ngày'), ('Tự lấy', 0, 'Tại cửa hàng'),
+       ('Quốc tế', 100000, 'Giao ngoài VN');
+-- 21. ThongKe (10 record, giữ)
+INSERT INTO ThongKe (NgayThongKe, TongDoanhThu, TongDonHang, SanPhamBanChayNhat, SoLuongNguoiDungMoi)
+VALUES ('2025-10-17', 700000, 2, 'Cây tùng giả', 2),
+       ('2025-10-16', 500000, 1, 'Bình hoa vintage', 1),
+       ('2025-10-15', 900000, 3, 'Đèn LED decor', 3),
+       ('2025-10-14', 600000, 2, 'Tranh decor tường', 2),
+       ('2025-10-13', 800000, 4, 'Kệ decor gỗ', 4),
+       ('2025-10-12', 400000, 1, 'Bình hoa hiện đại', 1),
+       ('2025-10-11', 1000000, 5, 'Cây mai giả Tết', 5),
+       ('2025-10-10', 550000, 2, 'Đèn bàn decor', 2),
+       ('2025-10-09', 650000, 3, 'Tranh Boho', 3),
+       ('2025-10-08', 750000, 4, 'Kệ treo tường', 4);
+– 22. ChinhSach (dựa trên website: giao hàng, trả hàng)
+INSERT INTO ChinhSach (Loai, NoiDung)
+VALUES ('Giao hàng', 'Giao hàng nhanh, miễn phí cho đơn hàng > 2000k hoặc đăng ký tài khoản. Mua thêm 2,000,000₫ để miễn phí giao trên toàn quốc. Hỗ trợ 9:00 - 17:00 thứ 2-7, hotline 096.180.1950.'),
+       ('Trả hàng/Bảo hành', 'Trả hàng hoặc đổi miễn phí trong vòng 3 ngày nếu không thích. Chất lượng đảm bảo, sản phẩm đa dạng, giá tiền phù hợp.'),
+       ('Thành viên', 'Đăng ký thành viên để nhận thông tin mới nhất về chương trình khuyến mãi.'),
+       ('Chất lượng', 'Chất lượng đảm bảo, sản phẩm đa dạng, giá tiền phù hợp.'),
+       ('Hotline', 'Hổ trợ từ thứ 2 - thứ 7. Hotline: 096.180.1950');
+

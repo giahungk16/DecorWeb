@@ -1,0 +1,250 @@
+--  DATABASE: DecorShop
+--  Version: Final (2025-10)
+-- =====================================================
+
+-- ======================
+-- A. QUẢN LÝ NGƯỜI DÙNG
+-- ======================
+CREATE TABLE TaiKhoan (
+    TaiKhoanID INT IDENTITY(1,1) PRIMARY KEY,
+    HoTen NVARCHAR(100),
+    Email NVARCHAR(100) UNIQUE,
+    MatKhau VARBINARY(255),
+    SoDienThoai NVARCHAR(20),
+    VaiTro NVARCHAR(50),
+    TrangThai BIT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL,
+    IsDeleted BIT DEFAULT 0
+);
+CREATE INDEX IDX_TaiKhoan_Email ON TaiKhoan(Email);
+
+-- ===========================
+-- B. DANH MỤC & SẢN PHẨM
+-- ===========================
+CREATE TABLE DanhMucSanPham (
+    DanhMucID INT IDENTITY(1,1) PRIMARY KEY,
+    TenDanhMuc NVARCHAR(100),
+    MoTa NVARCHAR(255),
+    DanhMucChaID INT NULL REFERENCES DanhMucSanPham(DanhMucID) ON DELETE SET NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL,
+    IsDeleted BIT DEFAULT 0
+);
+
+CREATE TABLE SanPham (
+    SanPhamID INT IDENTITY(1,1) PRIMARY KEY,
+    TenSanPham NVARCHAR(200),
+    MoTa NVARCHAR(MAX),
+    GiaBan DECIMAL(18,2),
+    SoLuongTon INT DEFAULT 0 CHECK (SoLuongTon >= 0),
+    DanhMucID INT FOREIGN KEY REFERENCES DanhMucSanPham(DanhMucID) ON DELETE SET NULL,
+    PhongCach NVARCHAR(100) NULL, -- Modern, Vintage, Boho...
+    TrangThai BIT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL,
+    IsDeleted BIT DEFAULT 0
+);
+CREATE INDEX IDX_SanPham_TenSanPham ON SanPham(TenSanPham);
+
+CREATE TABLE HinhAnhSanPham (
+    HinhAnhID INT IDENTITY(1,1) PRIMARY KEY,
+    SanPhamID INT FOREIGN KEY REFERENCES SanPham(SanPhamID) ON DELETE CASCADE,
+    URL NVARCHAR(255),
+    LaAnhChinh BIT DEFAULT 0,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL
+);
+
+CREATE TABLE DanhGiaSanPham (
+    DanhGiaID INT IDENTITY(1,1) PRIMARY KEY,
+    SanPhamID INT FOREIGN KEY REFERENCES SanPham(SanPhamID) ON DELETE CASCADE,
+    TaiKhoanID INT FOREIGN KEY REFERENCES TaiKhoan(TaiKhoanID) ON DELETE CASCADE,
+    SoSao INT CHECK (SoSao BETWEEN 1 AND 5) NOT NULL,
+    NoiDung NVARCHAR(MAX),
+    AnhReview NVARCHAR(255),
+    NgayDanhGia DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL,
+    IsDeleted BIT DEFAULT 0
+);
+
+-- ================================
+-- C. PHƯƠNG THỨC & THANH TOÁN
+-- ================================
+CREATE TABLE PhuongThucThanhToan (
+    PhuongThucThanhToanID INT IDENTITY(1,1) PRIMARY KEY,
+    TenPhuongThuc NVARCHAR(100),
+    MoTa NVARCHAR(255),
+    TrangThai BIT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL
+);
+
+CREATE TABLE PhuongThucGiaoHang (
+    PhuongThucGiaoHangID INT IDENTITY(1,1) PRIMARY KEY,
+    TenPhuongThuc NVARCHAR(100),
+    PhiGiaoHang DECIMAL(18,2),
+    MoTa NVARCHAR(255),
+    TrangThai BIT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL
+);
+
+-- ===============================
+-- D. GIỎ HÀNG & ĐƠN HÀNG
+-- ===============================
+CREATE TABLE GioHang (
+    GioHangID INT IDENTITY(1,1) PRIMARY KEY,
+    TaiKhoanID INT FOREIGN KEY REFERENCES TaiKhoan(TaiKhoanID) ON DELETE CASCADE,
+    NgayCapNhat DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL
+);
+
+CREATE TABLE ChiTietGioHang (
+    ChiTietGioHangID INT IDENTITY(1,1) PRIMARY KEY,
+    GioHangID INT FOREIGN KEY REFERENCES GioHang(GioHangID) ON DELETE CASCADE,
+    SanPhamID INT FOREIGN KEY REFERENCES SanPham(SanPhamID) ON DELETE CASCADE,
+    SoLuong INT CHECK (SoLuong > 0),
+    DonGia DECIMAL(18,2),
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE DonHang (
+    DonHangID INT IDENTITY(1,1) PRIMARY KEY,
+    TaiKhoanID INT FOREIGN KEY REFERENCES TaiKhoan(TaiKhoanID) ON DELETE CASCADE,
+    NgayDat DATETIME DEFAULT GETDATE(),
+    TongTien DECIMAL(18,2),
+    TrangThaiDon NVARCHAR(50),
+    DiaChiGiaoHang NVARCHAR(255),
+    PhuongThucThanhToanID INT FOREIGN KEY REFERENCES PhuongThucThanhToan(PhuongThucThanhToanID),
+    PhuongThucGiaoHangID INT FOREIGN KEY REFERENCES PhuongThucGiaoHang(PhuongThucGiaoHangID),
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL
+);
+
+CREATE TABLE ChiTietDonHang (
+    ChiTietDonHangID INT IDENTITY(1,1) PRIMARY KEY,
+    DonHangID INT FOREIGN KEY REFERENCES DonHang(DonHangID) ON DELETE CASCADE,
+    SanPhamID INT FOREIGN KEY REFERENCES SanPham(SanPhamID) ON DELETE CASCADE,
+    SoLuong INT CHECK (SoLuong > 0),
+    DonGia DECIMAL(18,2),
+    GiamGia DECIMAL(18,2),
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE LichSuThanhToan (
+    ThanhToanID INT IDENTITY(1,1) PRIMARY KEY,
+    DonHangID INT FOREIGN KEY REFERENCES DonHang(DonHangID) ON DELETE CASCADE,
+    PhuongThucThanhToanID INT FOREIGN KEY REFERENCES PhuongThucThanhToan(PhuongThucThanhToanID),
+    SoTien DECIMAL(18,2),
+    TrangThaiThanhToan NVARCHAR(50),
+    NgayThanhToan DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL
+);
+
+CREATE TABLE SanPhamYeuThich (
+    YeuThichID INT IDENTITY(1,1) PRIMARY KEY,
+    TaiKhoanID INT FOREIGN KEY REFERENCES TaiKhoan(TaiKhoanID) ON DELETE CASCADE,
+    SanPhamID INT FOREIGN KEY REFERENCES SanPham(SanPhamID) ON DELETE CASCADE,
+    NgayThem DATETIME DEFAULT GETDATE()
+);
+
+-- ===============================
+-- E. KHUYẾN MÃI & MARKETING
+-- ===============================
+CREATE TABLE PhieuGiamGia (
+    PhieuID INT IDENTITY(1,1) PRIMARY KEY,
+    MaPhieu NVARCHAR(50) UNIQUE,
+    GiaTriGiam DECIMAL(18,2),
+    DonToiThieu DECIMAL(18,2),
+    LoaiPhieu NVARCHAR(20) DEFAULT 'TienMat', -- hoặc % 
+    NgayBatDau DATETIME,
+    NgayKetThuc DATETIME,
+    SoLuong INT CHECK (SoLuong >= 0),
+    TrangThai BIT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CreatedBy NVARCHAR(100) NULL
+);
+
+CREATE TABLE ChiTietPhieuGiamGia (
+    ChiTietPhieuID INT IDENTITY(1,1) PRIMARY KEY,
+    PhieuID INT FOREIGN KEY REFERENCES PhieuGiamGia(PhieuID) ON DELETE CASCADE,
+    TaiKhoanID INT FOREIGN KEY REFERENCES TaiKhoan(TaiKhoanID) ON DELETE CASCADE,
+    DonHangID INT NULL FOREIGN KEY REFERENCES DonHang(DonHangID) ON DELETE SET NULL,
+    NgaySuDung DATETIME NULL
+);
+
+CREATE TABLE ThongBao (
+    ThongBaoID INT IDENTITY(1,1) PRIMARY KEY,
+    TaiKhoanID INT NULL FOREIGN KEY REFERENCES TaiKhoan(TaiKhoanID) ON DELETE CASCADE,
+    TieuDe NVARCHAR(200),
+    NoiDung NVARCHAR(MAX),
+    LoaiThongBao NVARCHAR(50),
+    NgayGui DATETIME DEFAULT GETDATE(),
+    TrangThai BIT DEFAULT 1
+);
+
+-- ===============================
+-- F. NỘI DUNG & AI
+-- ===============================
+CREATE TABLE BaiViet (
+    BaiVietID INT IDENTITY(1,1) PRIMARY KEY,
+    TieuDe NVARCHAR(200),
+    NoiDung NVARCHAR(MAX),
+    AnhDaiDien NVARCHAR(255),
+    NgayDang DATETIME DEFAULT GETDATE(),
+    TacGia NVARCHAR(100),
+    TrangThai BIT DEFAULT 1
+);
+
+CREATE TABLE GoiYSanPham (
+    GoiYID INT IDENTITY(1,1) PRIMARY KEY,
+    TaiKhoanID INT FOREIGN KEY REFERENCES TaiKhoan(TaiKhoanID) ON DELETE CASCADE,
+    SanPhamID INT FOREIGN KEY REFERENCES SanPham(SanPhamID) ON DELETE CASCADE,
+    LyDoGoiY NVARCHAR(255),
+    NguonGoiY NVARCHAR(50) NULL, -- Ví dụ: 'AI', 'History', 'Popular'
+    NgayGoiY DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE ChatBot (
+    ChatID INT IDENTITY(1,1) PRIMARY KEY,
+    TaiKhoanID INT FOREIGN KEY REFERENCES TaiKhoan(TaiKhoanID) ON DELETE CASCADE,
+    CauHoi NVARCHAR(MAX),
+    CauTraLoi NVARCHAR(MAX),
+    NguonCauHoi NVARCHAR(50) NULL, -- FAQ / Decor / Product
+    ThoiGian DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE LichSuHanhVi (
+    HanhViID INT IDENTITY(1,1) PRIMARY KEY,
+    TaiKhoanID INT FOREIGN KEY REFERENCES TaiKhoan(TaiKhoanID) ON DELETE CASCADE,
+    LoaiHanhVi NVARCHAR(100),
+    DoiTuongID INT NULL,
+    MoTa NVARCHAR(255) NULL,
+    NgayThucHien DATETIME DEFAULT GETDATE()
+);
+
+-- ===============================
+-- G. THỐNG KÊ & CHÍNH SÁCH
+-- ===============================
+CREATE TABLE ThongKe (
+    ThongKeID INT IDENTITY(1,1) PRIMARY KEY,
+    NgayThongKe DATE UNIQUE,
+    TongDoanhThu DECIMAL(18,2),
+    TongDonHang INT,
+    SanPhamBanChayNhat NVARCHAR(200),
+    SoLuongNguoiDungMoi INT
+);
+
+CREATE TABLE ChinhSach (
+    ChinhSachID INT IDENTITY(1,1) PRIMARY KEY,
+    Loai NVARCHAR(50) NOT NULL, 
+    NoiDung NVARCHAR(MAX) NOT NULL,
+    NgayCapNhat DATETIME DEFAULT GETDATE(),
+    TrangThai BIT DEFAULT 1
+);
