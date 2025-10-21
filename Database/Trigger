@@ -1,0 +1,385 @@
+Trigger
+-- 1. Trigger cập nhật tồn kho khi thêm chi tiết đơn hàng (giảm SoLuongTon)
+CREATE OR ALTER TRIGGER TRG_UpdateTonKho_Insert
+ON ChiTietDonHang
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- nếu có bất kỳ sản phẩm nào thiếu tồn trước khi cập nhật -> rollback
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        JOIN SanPham s ON s.SanPhamID = i.SanPhamID
+        WHERE s.SoLuongTon < i.SoLuong
+    )
+    BEGIN
+        RAISERROR('Không đủ tồn kho cho một hoặc nhiều sản phẩm. Giao dịch bị huỷ.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+
+    -- set-based update
+    UPDATE s
+    SET s.SoLuongTon = s.SoLuongTon - i.TotalQty
+    FROM SanPham s
+    JOIN (
+        SELECT SanPhamID, SUM(SoLuong) AS TotalQty
+        FROM inserted
+        GROUP BY SanPhamID
+    ) i ON s.SanPhamID = i.SanPhamID;
+END;
+GO
+
+-- 2. Trigger khôi phục tồn kho khi xóa chi tiết đơn hàng
+CREATE OR ALTER TRIGGER TRG_UpdateTonKho_Delete
+ON ChiTietDonHang
+AFTER DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE s
+    SET s.SoLuongTon = s.SoLuongTon + d.TotalQty
+    FROM SanPham s
+    JOIN (
+        SELECT SanPhamID, SUM(SoLuong) AS TotalQty
+        FROM deleted
+        GROUP BY SanPhamID
+    ) d ON s.SanPhamID = d.SanPhamID;
+END;
+GO
+
+-- 3. Trigger cập nhật tổng tiền đơn hàng khi thêm/cập nhật/xóa chi tiết đơn hàng
+CREATE OR ALTER TRIGGER TRG_UpdateTongTienDonHang
+ON ChiTietDonHang
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- tập DonHangID cần cập nhật (lấy từ inserted và deleted)
+    ;WITH AffectedOrders AS (
+        SELECT DonHangID FROM inserted
+        UNION
+        SELECT DonHangID FROM deleted
+    )
+    -- cập nhật TongTien cho mỗi đơn
+    UPDATE dh
+    SET TongTien = ISNULL(t.Total, 0)
+    FROM DonHang dh
+    JOIN (
+        SELECT DonHangID, SUM(SoLuong * DonGia - ISNULL(GiamGia,0)) AS Total
+        FROM ChiTietDonHang
+        GROUP BY DonHangID
+    ) t ON dh.DonHangID = t.DonHangID
+    WHERE dh.DonHangID IN (SELECT DonHangID FROM AffectedOrders);
+
+    -- đối với đơn giờ không còn chi tiết (tổng NULL), đặt = 0
+    UPDATE dh
+    SET TongTien = 0
+    FROM DonHang dh
+    WHERE dh.DonHangID IN (SELECT DonHangID FROM AffectedOrders)
+      AND NOT EXISTS (SELECT 1 FROM ChiTietDonHang c WHERE c.DonHangID = dh.DonHangID);
+END;
+GO
+
+-- 4. Trigger ghi lịch sử hành vi khi thêm vào giỏ hàng (LoaiHanhVi = 'Them gio hang')
+CREATE OR ALTER TRIGGER TRG_LogHanhVi_ThemGioHang
+ON ChiTietGioHang
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO LichSuHanhVi (TaiKhoanID, LoaiHanhVi, DoiTuongID, MoTa, NgayThucHien)
+    SELECT g.TaiKhoanID, N'Them gio hang', i.SanPhamID, NULL, GETDATE()
+    FROM inserted i
+    INNER JOIN GioHang g ON i.GioHangID = g.GioHangID;
+END;
+GO
+
+-- 5. Trigger ghi lịch sử hành vi khi thêm yêu thích (LoaiHanhVi = 'Yeu thich san pham')
+CREATE OR ALTER TRIGGER TRG_LogHanhVi_YeuThich
+ON SanPhamYeuThich
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO LichSuHanhVi (TaiKhoanID, LoaiHanhVi, DoiTuongID, NgayThucHien)
+    SELECT i.TaiKhoanID, N'Yeu thich san pham', i.SanPhamID, GETDATE()
+    FROM inserted i;
+END;
+GO
+
+-- 6. Trigger ghi lịch sử hành vi khi đặt đơn hàng (LoaiHanhVi = 'Dat hang')
+CREATE OR ALTER TRIGGER TRG_LogHanhVi_DatHang
+ON DonHang
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO LichSuHanhVi (TaiKhoanID, LoaiHanhVi, DoiTuongID, NgayThucHien)
+    SELECT i.TaiKhoanID, N'Dat hang', i.DonHangID, GETDATE()
+    FROM inserted i;
+END;
+GO
+
+-- 7. Trigger giảm số lượng phiếu giảm giá khi sử dụng
+CREATE OR ALTER TRIGGER TRG_UpdateSoLuongPhieuGiamGia
+ON ChiTietPhieuGiamGia
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE p
+    SET p.SoLuong = p.SoLuong - i.UseCount
+    FROM PhieuGiamGia p
+    JOIN (
+        SELECT PhieuID, COUNT(*) AS UseCount
+        FROM inserted
+        GROUP BY PhieuID
+    ) i ON p.PhieuID = i.PhieuID
+    WHERE p.SoLuong >= i.UseCount;
+
+    -- Nếu có tình huống p.SoLuong < required, ta có thể cảnh báo (không rollback ở đây)
+    IF EXISTS (
+        SELECT 1
+        FROM PhieuGiamGia p
+        JOIN (
+            SELECT PhieuID, COUNT(*) AS UseCount
+            FROM inserted
+            GROUP BY PhieuID
+        ) i ON p.PhieuID = i.PhieuID
+        WHERE p.SoLuong < i.UseCount
+    )
+    BEGIN
+        RAISERROR('Phiếu giảm giá không đủ số lượng còn lại cho một số mã. Kiểm tra logic sử dụng voucher.', 10, 1);
+        -- không rollback để tránh huỷ các thao tác liên quan; tùy yêu cầu, bạn có thể ROLLBACK TRANSACTION ở đây
+    END
+END;
+GO
+
+-- 8. Trigger cập nhật thống kê khi thêm đơn hàng (tăng TongDonHang, TongDoanhThu)
+CREATE OR ALTER TRIGGER TRG_UpdateThongKe_DonHang
+ON DonHang
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Tập ngày cần xử lý
+    ;WITH Dates AS (
+        SELECT CAST(NgayDat AS DATE) AS Ngay
+        FROM inserted
+        GROUP BY CAST(NgayDat AS DATE)
+    )
+    -- đảm bảo có bản ghi ThongKe cho mỗi ngày trong inserted
+    INSERT INTO ThongKe (NgayThongKe, TongDoanhThu, TongDonHang, SanPhamBanChayNhat, SoLuongNguoiDungMoi)
+    SELECT d.Ngay, 0, 0, NULL, 0
+    FROM Dates d
+    WHERE NOT EXISTS (SELECT 1 FROM ThongKe tk WHERE tk.NgayThongKe = d.Ngay);
+
+    -- Cập nhật tổng tiền & tổng đơn theo ngày
+    ;WITH OrderSums AS (
+        SELECT CAST(dh.NgayDat AS DATE) AS Ngay, COUNT(DISTINCT dh.DonHangID) AS NumOrders, SUM(ISNULL(dh.TongTien,0)) AS SumMoney
+        FROM DonHang dh
+        WHERE CAST(dh.NgayDat AS DATE) IN (SELECT CAST(NgayDat AS DATE) FROM inserted)
+        GROUP BY CAST(dh.NgayDat AS DATE)
+    )
+    UPDATE tk
+    SET tk.TongDonHang = tk.TongDonHang + os.NumOrders,
+        tk.TongDoanhThu = tk.TongDoanhThu + os.SumMoney
+    FROM ThongKe tk
+    JOIN OrderSums os ON tk.NgayThongKe = os.Ngay;
+END;
+GO
+
+-- 9. Trigger cập nhật thống kê người dùng mới khi đăng ký tài khoản
+CREATE OR ALTER TRIGGER TRG_UpdateThongKe_UserMoi
+ON TaiKhoan
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH Dates AS (
+        SELECT CAST(CreatedAt AS DATE) AS Ngay
+        FROM inserted
+        GROUP BY CAST(CreatedAt AS DATE)
+    )
+    INSERT INTO ThongKe (NgayThongKe, TongDoanhThu, TongDonHang, SanPhamBanChayNhat, SoLuongNguoiDungMoi)
+    SELECT d.Ngay, 0, 0, NULL, COUNT(*)
+    FROM Dates d
+    JOIN inserted i ON CAST(i.CreatedAt AS DATE) = d.Ngay
+    GROUP BY d.Ngay
+    WHERE NOT EXISTS (SELECT 1 FROM ThongKe tk WHERE tk.NgayThongKe = d.Ngay);
+
+    -- Nếu ThongKe đã có, tăng SoLuongNguoiDungMoi
+    UPDATE tk
+    SET tk.SoLuongNguoiDungMoi = tk.SoLuongNguoiDungMoi + t.NewUsers
+    FROM ThongKe tk
+    JOIN (
+        SELECT CAST(CreatedAt AS DATE) AS Ngay, COUNT(*) AS NewUsers
+        FROM inserted
+        GROUP BY CAST(CreatedAt AS DATE)
+    ) t ON tk.NgayThongKe = t.Ngay;
+END;
+GO
+
+-- 10. Trigger cập nhật sản phẩm bán chạy nhất trong thống kê (dựa trên số lượng bán trong ngày)
+CREATE OR ALTER TRIGGER TRG_UpdateSanPhamBanChay
+ON ChiTietDonHang
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Dates TABLE (Ngay DATE);
+    INSERT INTO @Dates(Ngay)
+    SELECT DISTINCT CAST(dh.NgayDat AS DATE)
+    FROM inserted i
+    JOIN DonHang dh ON i.DonHangID = dh.DonHangID;
+
+    DECLARE @d DATE;
+    DECLARE cur CURSOR FAST_FORWARD FOR SELECT Ngay FROM @Dates;
+    OPEN cur;
+    FETCH NEXT FROM cur INTO @d;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        -- ensure ThongKe row exists
+        IF NOT EXISTS (SELECT 1 FROM ThongKe WHERE NgayThongKe = @d)
+            INSERT INTO ThongKe (NgayThongKe, TongDoanhThu, TongDonHang, SanPhamBanChayNhat, SoLuongNguoiDungMoi)
+            VALUES (@d, 0, 0, NULL, 0);
+
+        -- compute best selling product name for that date
+        ;WITH BestProd AS (
+            SELECT TOP 1 s.TenSanPham, SUM(i.SoLuong) AS TotalQty
+            FROM ChiTietDonHang i
+            JOIN SanPham s ON i.SanPhamID = s.SanPhamID
+            JOIN DonHang dh ON i.DonHangID = dh.DonHangID
+            WHERE CAST(dh.NgayDat AS DATE) = @d
+            GROUP BY s.SanPhamID, s.TenSanPham
+            ORDER BY SUM(i.SoLuong) DESC
+        )
+        UPDATE tk
+        SET SanPhamBanChayNhat = bp.TenSanPham
+        FROM ThongKe tk
+        CROSS APPLY (SELECT TOP 1 TenSanPham FROM BestProd) bp
+        WHERE tk.NgayThongKe = @d;
+
+        FETCH NEXT FROM cur INTO @d;
+    END
+    CLOSE cur;
+    DEALLOCATE cur;
+END;
+GO
+
+-- 11. Trigger ghi lịch sử hành vi khi thêm đánh giá sản phẩm (LoaiHanhVi = 'Danh gia san pham')
+CREATE OR ALTER TRIGGER TRG_LogHanhVi_DanhGia
+ON DanhGiaSanPham
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO LichSuHanhVi (TaiKhoanID, LoaiHanhVi, DoiTuongID, NgayThucHien)
+    SELECT i.TaiKhoanID, N'Danh gia san pham', i.SanPhamID, GETDATE()
+    FROM inserted i;
+END;
+GO
+
+-- 12. Trigger xem bài viết: optional, left blank (can implement when BaiViet has LuotXem column)
+-- (No-op placeholder)
+
+-- 13. Trigger cập nhật trạng thái thanh toán khi thêm lịch sử thanh toán
+CREATE OR ALTER TRIGGER TRG_UpdateTrangThaiDonHang_ThanhToan
+ON LichSuThanhToan
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE dh
+    SET TrangThaiDon = 'Da thanh toan'
+    FROM DonHang dh
+    JOIN inserted i ON dh.DonHangID = i.DonHangID
+    WHERE LOWER(REPLACE(i.TrangThaiThanhToan, N' ', '')) IN ('thanhcong','thanhcong'); -- normalize
+END;
+GO
+
+-- 14. Trigger ghi lịch sử hành vi khi gửi thông báo (LoaiHanhVi = 'Nhan thong bao')
+CREATE OR ALTER TRIGGER TRG_LogHanhVi_ThongBao
+ON ThongBao
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO LichSuHanhVi (TaiKhoanID, LoaiHanhVi, DoiTuongID, MoTa, NgayThucHien)
+    SELECT i.TaiKhoanID, N'Gui thong bao', i.ThongBaoID, i.TieuDe, GETDATE()
+    FROM inserted i;
+END;
+GO
+
+-- 15. Trigger ghi lịch sử hành vi khi gợi ý sản phẩm (LoaiHanhVi = 'Goi y san pham')
+CREATE OR ALTER TRIGGER TRG_LogHanhVi_GoiY
+ON GoiYSanPham
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO LichSuHanhVi (TaiKhoanID, LoaiHanhVi, DoiTuongID, MoTa, NgayThucHien)
+    SELECT i.TaiKhoanID, N'Goi y san pham', i.SanPhamID, i.LyDoGoiY, GETDATE()
+    FROM inserted i;
+END;
+GO
+
+-- 16. Trigger ghi lịch sử hành vi khi chat với chatbot (LoaiHanhVi = 'Chat voi AI')
+CREATE OR ALTER TRIGGER TRG_LogHanhVi_ChatBot
+ON ChatBot
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO LichSuHanhVi (TaiKhoanID, LoaiHanhVi, DoiTuongID, MoTa, NgayThucHien)
+    SELECT i.TaiKhoanID, N'Chat voi AI', i.ChatID, LEFT(i.CauHoi, 200), GETDATE()
+    FROM inserted i;
+END;
+GO
+
+-- 17. Trigger log phong cách khi xem sản phẩm (khi LichSuHanhVi ghi 'Xem san pham')
+CREATE OR ALTER TRIGGER TRG_LogPhongCach
+ON LichSuHanhVi
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO LichSuHanhVi (TaiKhoanID, LoaiHanhVi, DoiTuongID, MoTa, NgayThucHien)
+    SELECT l.TaiKhoanID, N'Quan tam phong cach: ' + s.PhongCach, l.DoiTuongID, NULL, GETDATE()
+    FROM inserted l
+    JOIN SanPham s ON l.DoiTuongID = s.SanPhamID
+    WHERE l.LoaiHanhVi = N'Xem sản phẩm' AND s.PhongCach IS NOT NULL;
+END;
+GO
+
+-- 18. Trigger gửi thông báo cá nhân hóa khi cập nhật chính sách
+CREATE OR ALTER TRIGGER TRG_ThongBaoChinhSach
+ON ChinhSach
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO ThongBao (TaiKhoanID, TieuDe, NoiDung, LoaiThongBao, NgayGui)
+    SELECT NULL, N'Cap nhat chinh sach', N'Chinh sach: ' + i.Loai + N' da cap nhat.', N'He thong', GETDATE()
+    FROM inserted i;
+END;
+GO
